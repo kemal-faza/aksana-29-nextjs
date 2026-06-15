@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "buildCommand": "tsc",
+  "outputDirectory": "dist",
+  "functions": {
+    "app/**/*.ts": {
+      "maxDuration": 10
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/app/main" }
+  ]
+}
