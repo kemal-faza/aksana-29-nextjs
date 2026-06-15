@@ -1,3 +1,4 @@
+import { eq } from 'drizzle-orm';
 import { db } from '../client';
 import { allowedAdmins } from '../schema/allowed-admins';
 
@@ -8,9 +9,11 @@ async function main() {
     process.exit(1);
   }
 
-  const existing = await db.query.allowedAdmins.findFirst({
-    where: (a, { eq }) => eq(a.email, email),
-  });
+  const existing = await db
+    .select()
+    .from(allowedAdmins)
+    .where(eq(allowedAdmins.email, email))
+    .then(rows => rows[0] || null);
 
   if (existing) {
     console.log(`Admin ${email} already exists (id: ${existing.id})`);
