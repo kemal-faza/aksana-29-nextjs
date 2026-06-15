@@ -13,6 +13,7 @@
   "dependencies": {
     "@aksana/shared": "workspace:*",
     "@supabase/supabase-js": "^2.46.0",
+    "next": "^14.2.18",
     "@nestjs/common": "^10.4.0",
     "@nestjs/core": "^10.4.0",
     "@nestjs/platform-express": "^10.4.0",
