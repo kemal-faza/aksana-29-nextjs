@@ -32,12 +32,14 @@ interface OriginalSambutan {
   nama: string;
   jabatan: string;
   image?: string;
+  image_path?: string;
   isi: string;
   urutan?: number;
 }
 
 interface OriginalSudut {
-  image: string;
+  image?: string;
+  image_path?: string;
   caption?: string;
   urutan?: number;
 }
@@ -171,7 +173,7 @@ async function seedSambutan(data: OriginalSambutan[]) {
   const mapped = data.map((s) => ({
     nama: s.nama,
     jabatan: s.jabatan,
-    imagePath: s.image || null,
+    imagePath: s.image || s.image_path || null,
     isi: s.isi,
     urutan: s.urutan ?? 1,
     isActive: true,
@@ -197,10 +199,10 @@ async function seedSudutSekolah(data: OriginalSudut[]) {
   }
 
   const mapped = data.map((s, idx) => ({
-    imagePath: s.image,
-    caption: s.caption || null,
-    urutan: s.urutan ?? idx + 1,
-    isActive: true,
+        imagePath: s.image || s.image_path || null,
+        caption: s.caption || null,
+        urutan: s.urutan || 1,
+        isActive: true,
   }));
 
   let inserted = 0;
