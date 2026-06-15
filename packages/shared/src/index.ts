@@ -8,3 +8,7 @@ export { IMAGE_VARIANTS, CANONICAL_VARIANT } from './constants/image-variants';
 export type { ImageVariant } from './constants/image-variants';
 
 export * from './schemas/student';
+export * from './schemas/sudut-sekolah';
+export * from './schemas/video';
+export * from './schemas/teacher';
+export * from './schemas/sambutan';
