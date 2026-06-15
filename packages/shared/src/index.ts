@@ -6,3 +6,5 @@ export type { JabatanSiswa } from './constants/jabatan';
 
 export { IMAGE_VARIANTS, CANONICAL_VARIANT } from './constants/image-variants';
 export type { ImageVariant } from './constants/image-variants';
+
+export * from './schemas/student';
