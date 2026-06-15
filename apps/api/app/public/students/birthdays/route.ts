@@ -2,6 +2,14 @@ import { getSupabaseAdmin } from '../../../utils/supabase';
 
 export const runtime = 'nodejs';
 
+interface BirthdayRow {
+  id: string;
+  nama: string;
+  kelas: string;
+  image_path: string | null;
+  ttl: string | null;
+}
+
 export async function GET() {
   const supabase = getSupabaseAdmin();
 
@@ -14,11 +22,12 @@ export async function GET() {
     return Response.json({ error: error.message }, { status: 500 });
   }
 
+  const rows = (data || []) as unknown as BirthdayRow[];
   const now = new Date();
   const todayMonth = now.getMonth() + 1;
   const todayDay = now.getDate();
 
-  const today = (data || []).filter(s => {
+  const today = rows.filter(s => {
     if (!s.ttl) return false;
     const d = new Date(s.ttl);
     return d.getUTCMonth() + 1 === todayMonth && d.getUTCDate() === todayDay;
@@ -29,7 +38,7 @@ export async function GET() {
     image_path: s.image_path,
   }));
 
-  const thisMonth = (data || []).filter(s => {
+  const thisMonth = rows.filter(s => {
     if (!s.ttl) return false;
     const d = new Date(s.ttl);
     return d.getUTCMonth() + 1 === todayMonth;
