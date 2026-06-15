@@ -4,6 +4,10 @@ import { About } from '@/components/public/About';
 import { BirthdayPopup } from '@/components/public/BirthdayPopup';
 import { BirthdayCard } from '@/components/public/BirthdayCard';
 
+export const dynamic = 'force-dynamic';
+
+const NOOP_BIRTHDAYS: BirthdayResponse = { today: [], thisMonth: [] };
+
 interface StudentsResponse {
   data: Array<{ id: string; nama: string; kelas: string }>;
   total: number;
@@ -21,10 +25,17 @@ interface BirthdayResponse {
 }
 
 export default async function HomePage() {
-  const [{ total }, birthdayData] = await Promise.all([
+  const [studentsRes, birthdayRes] = await Promise.allSettled([
     apiGet<StudentsResponse>('/api/public/students', { limit: '1' }),
     apiGet<BirthdayResponse>('/api/public/students/birthdays'),
   ]);
+
+  const total =
+    studentsRes.status === 'fulfilled' ? studentsRes.value.total : 0;
+  const birthdayData =
+    birthdayRes.status === 'fulfilled'
+      ? birthdayRes.value
+      : NOOP_BIRTHDAYS;
 
   return (
     <>
