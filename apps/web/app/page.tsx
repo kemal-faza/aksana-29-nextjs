@@ -1,19 +1,38 @@
 import { apiGet } from '@/lib/api';
+import { Hero } from '@/components/public/Hero';
+import { About } from '@/components/public/About';
+import { BirthdayPopup } from '@/components/public/BirthdayPopup';
+import { BirthdayCard } from '@/components/public/BirthdayCard';
 
 interface StudentsResponse {
   data: Array<{ id: string; nama: string; kelas: string }>;
   total: number;
 }
 
+interface BirthdayResponse {
+  today: Array<{ id: string; nama: string; kelas: string; image_path: string | null }>;
+  thisMonth: Array<{
+    id: string;
+    nama: string;
+    kelas: string;
+    image_path: string | null;
+    tanggal: string;
+  }>;
+}
+
 export default async function HomePage() {
-  const { total } = await apiGet<StudentsResponse>('/api/public/students', { limit: '1' });
+  const [{ total }, birthdayData] = await Promise.all([
+    apiGet<StudentsResponse>('/api/public/students', { limit: '1' }),
+    apiGet<BirthdayResponse>('/api/public/students/birthdays'),
+  ]);
 
   return (
-    <main className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-4xl font-heading text-primary">AKSANA 29</h1>
-        <p className="mt-4 text-secondary">Total siswa: {total}</p>
-      </div>
-    </main>
+    <>
+      <Hero />
+      <About />
+      <BirthdayCard students={birthdayData.thisMonth} />
+      <BirthdayPopup students={birthdayData.today} />
+      <p className="text-center py-4">Total siswa: {total}</p>
+    </>
   );
 }
