@@ -20,9 +20,34 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "paths": {
-      "@aksana/shared": ["../../packages/shared/src"]
-    }
+      "@aksana/shared": [
+        "../../packages/shared/src"
+      ]
+    },
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "strict": false,
+    "noEmit": true,
+    "moduleResolution": "node",
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
-  "include": ["app/**/*"],
-  "exclude": ["node_modules", "dist", "__tests__"]
+  "include": [
+    "app/**/*",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "__tests__"
+  ]
 }

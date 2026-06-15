@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch app/main.ts",
-    "build": "tsc",
+    "build": "next build",
     "start": "node dist/main.js",
     "test": "jest --passWithNoTests",
     "type-check": "tsc --noEmit",
