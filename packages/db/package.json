@@ -1,0 +1,22 @@
+{
+  "name": "@aksana/db",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "scripts": {
+    "generate": "drizzle-kit generate",
+    "migrate": "drizzle-kit migrate",
+    "push": "drizzle-kit push",
+    "studio": "drizzle-kit studio",
+    "seed:bootstrap": "tsx src/seed/bootstrap-admin.ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.36.0",
+    "postgres": "^3.4.5",
+    "tsx": "^4.19.0"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.28.0",
+    "typescript": "^5.7.0"
+  }
+}
