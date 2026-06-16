@@ -69,3 +69,6 @@ temp/
 # Local data (for development)
 data/local/
 seed-output/
+
+# Sentry Config File
+.env.sentry-build-plugin

@@ -1,5 +1,10 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+// Strip /api prefix because API routes are served at root (/admin/*)
+function resolvePath(path: string): string {
+  return path.replace(/^\/api/, '');
+}
+
 async function getAccessToken(): Promise<string | null> {
   try {
     const { createClient } = await import('@/lib/supabase/client');
@@ -16,7 +21,7 @@ async function adminFetch<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const token = await getAccessToken();
-  const url = `${API_URL}${path}`;
+  const url = `${API_URL}${resolvePath(path)}`;
 
   const res = await fetch(url, {
     ...options,

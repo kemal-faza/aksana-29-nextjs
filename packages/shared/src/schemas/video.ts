@@ -7,8 +7,8 @@ export const VideoDbSchema = z.object({
   deskripsi: z.string().nullable(),
   urutan: z.number().int().positive(),
   is_active: z.boolean(),
-  created_at: z.string().datetime().optional(),
-  updated_at: z.string().datetime().optional(),
+  created_at: z.string().optional(),
+  updated_at: z.string().optional(),
 });
 export type VideoDb = z.infer<typeof VideoDbSchema>;
 

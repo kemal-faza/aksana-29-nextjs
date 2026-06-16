@@ -8,8 +8,8 @@ export const TeacherDbSchema = z.object({
   image_path: z.string().nullable(),
   ekstra: z.string().nullable(),
   urutan: z.number().int().positive(),
-  created_at: z.string().datetime().optional(),
-  updated_at: z.string().datetime().optional(),
+  created_at: z.string().optional(),
+  updated_at: z.string().optional(),
 });
 export type TeacherDb = z.infer<typeof TeacherDbSchema>;
 

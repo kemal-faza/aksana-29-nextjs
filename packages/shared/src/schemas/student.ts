@@ -11,8 +11,8 @@ export const StudentDbSchema = z.object({
   pesan: z.string().nullable(),
   ttl: z.string().date().nullable(),
   ekstra: z.string().nullable(),
-  created_at: z.string().datetime().optional(),
-  updated_at: z.string().datetime().optional(),
+  created_at: z.string().optional(),
+  updated_at: z.string().optional(),
   created_by: z.string().uuid().nullable().optional(),
   updated_by: z.string().uuid().nullable().optional(),
 });

@@ -8,8 +8,8 @@ export const SambutanDbSchema = z.object({
   isi: z.string(),
   urutan: z.number().int().positive(),
   is_active: z.boolean(),
-  created_at: z.string().datetime().optional(),
-  updated_at: z.string().datetime().optional(),
+  created_at: z.string().optional(),
+  updated_at: z.string().optional(),
 });
 export type SambutanDb = z.infer<typeof SambutanDbSchema>;
 
