@@ -3,6 +3,8 @@ import { Hero } from '@/components/public/Hero';
 import { About } from '@/components/public/About';
 import { BirthdayPopup } from '@/components/public/BirthdayPopup';
 import { BirthdayCard } from '@/components/public/BirthdayCard';
+import { SambutanCarousel } from '@/components/public/SambutanCarousel';
+import { SudutSekolahCarousel } from '@/components/public/SudutSekolahCarousel';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,8 +44,9 @@ export default async function HomePage() {
       <Hero />
       <About />
       <BirthdayCard students={birthdayData.thisMonth} />
+      <SambutanCarousel />
+      <SudutSekolahCarousel />
       <BirthdayPopup students={birthdayData.today} />
-      <p className="text-center py-4">Total siswa: {total}</p>
     </>
   );
 }

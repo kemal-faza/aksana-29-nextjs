@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { Header } from '@/components/public/Header';
+import { Footer } from '@/components/public/Footer';
 
 export const metadata: Metadata = {
   title: 'AKSANA 29 - MAN Kapuas',
@@ -12,5 +14,11 @@ export const metadata: Metadata = {
 };
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return (
+    <>
+      <Header />
+      <main className="min-h-screen">{children}</main>
+      <Footer />
+    </>
+  );
 }
