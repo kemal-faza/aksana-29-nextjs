@@ -1,157 +1,176 @@
-# Handoff: Aksana 29 v5 Implementation (Phase 1-2 Complete)
+# Handoff: Aksana 29 v5 Implementation (Phase 1-2 + Phase 3 Complete)
 
 ## Summary
 
-18 dari 41 tasks selesai. Monorepo (pnpm + Turborepo) dengan apps/web (Next.js 14) + apps/api (Next.js route handlers) + packages/shared/shared (Drizzle ORM + Zod). Semua data public site sudah live (279 students, 60 teachers, 4 sambutan, 47 sudut sekolah, 2 videos) terkoneksi Supabase. Google OAuth + JWT verify + admin guard sudah terpasang. Yang tersisa: Admin Dashboard CRUD (Tasks 26-33) dan Polish/Deploy (Tasks 34-41), plus redeploy Vercel untuk env vars.
+Semua 33 tasks Foundation + Data + Public + Auth + Image + Admin Dashboard selesai. Monorepo (pnpm + Turborepo) dengan apps/web (Next.js 14) + apps/api (Next.js route handlers) + packages/{shared,db}. Public site live dengan 279 students, 60 teachers, 4 sambutan, 47 sudut sekolah, 2 videos dari Supabase. Admin Dashboard lengkap dengan CRUD untuk semua entitas + whitelist management + image upload UI. Google OAuth + JWT verify + admin guard terpasang. Deployed ke Vercel, web dan API keduanya live.
+
+Tersisa: Frontend publik components (Sambutan carousel, Sudut Sekolah carousel, Navbar, Footer) + Polish/Deploy (Tasks 35-41).
 
 ## Current State
 
 ### Git
 
 - Branch: main
-- 26 commits sejak start
-- Working tree: clean (kecuali memory/2026-06-16.md untracked)
+- 28 commits sejak start (commit terakhir: `5bde897`)
+- Working tree: clean
 - Remote: `origin` pointing to `github.com:kemal-faza/aksana-29-nextjs.git`
 
-### Arsitektur Terbangun
+### Arsitektur Terbangun (update dari handoff sebelumnya)
 
 ```
 aksana-29-nextjs/
 ├── apps/
 │   ├── web/                              [Next.js 14 - LIVE di Vercel]
 │   │   ├── app/(public)/                 [Semua halaman publik]
+│   │   │   ├── layout.tsx                [SEO metadata - NEW]
 │   │   │   ├── page.tsx                  [Hero + About + Birthday]
-│   │   │   ├── guru/page.tsx             [Daftar guru + search + modal]
-│   │   │   ├── pesdik/[kelas]/page.tsx   [8 kelas routes]
-│   │   │   └── galeri/page.tsx           [Video embed Google Drive]
+│   │   │   ├── guru/page.tsx + layout.tsx [SEO - NEW layout]
+│   │   │   ├── pesdik/[kelas]/page.tsx + layout.tsx [Dynamic metadata - NEW]
+│   │   │   └── galeri/page.tsx + layout.tsx [SEO - NEW layout]
 │   │   ├── app/(admin)/                  [Protected routes]
-│   │   │   ├── layout.tsx
-│   │   │   ├── login/page.tsx            [Google OAuth button]
-│   │   │   └── dashboard/page.tsx        [Placeholder]
-│   │   ├── app/auth/callback/route.ts    [OAuth exchange]
-│   │   ├── middleware.ts                 [Route protection]
+│   │   │   ├── layout.tsx                [Sidebar + main layout - MODIFIED]
+│   │   │   ├── login/page.tsx
+│   │   │   └── dashboard/
+│   │   │       ├── page.tsx              [Stats dashboard - MODIFIED]
+│   │   │       ├── students/             [CRUD: list + create + edit - NEW]
+│   │   │       ├── teachers/             [CRUD: list + create + edit - NEW]
+│   │   │       ├── sambutan/             [CRUD: list + create + edit - NEW]
+│   │   │       ├── sudut-sekolah/        [CRUD: list + create + edit - NEW]
+│   │   │       ├── gallery/              [CRUD: list + create + edit - NEW]
+│   │   │       └── admins/               [Whitelist management - NEW]
+│   │   ├── components/
+│   │   │   ├── public/                   [Hero, About, Cards, Modals, VideoEmbed, Birthday]
+│   │   │   └── admin/                    [NEW]
+│   │   │       ├── Sidebar.tsx, DataTable.tsx, ImageUpload.tsx
+│   │   │       ├── StudentForm.tsx, TeacherForm.tsx, SambutanForm.tsx
+│   │   │       ├── SudutSekolahForm.tsx, VideoForm.tsx
 │   │   ├── lib/
-│   │   │   ├── api.ts                    [Fetch wrapper + ISR]
-│   │   │   ├── images.ts                 [getImageUrl + getImageSrcSet]
-│   │   │   └── supabase/                 [client.ts, server.ts, middleware.ts]
-│   │   └── components/public/
-│   │       ├── Hero.tsx, About.tsx
-│   │       ├── StudentCard.tsx, StudentModal.tsx
-│   │       ├── TeacherCard.tsx, TeacherModal.tsx
-│   │       ├── VideoEmbed.tsx
-│   │       ├── BirthdayPopup.tsx, BirthdayCard.tsx
-│   │       └── [Admin components: BELUM]
-│   └── api/                              [Next.js route handlers - Vercel]
+│   │   │   ├── api.ts                    [Fetch wrapper - MODIFIED: strip /api prefix]
+│   │   │   ├── admin-api.ts              [NEW: auth-aware fetch with JWT]
+│   │   │   ├── images.ts
+│   │   │   └── supabase/
+│   │   └── app/auth/callback/route.ts
+│   └── api/                              [Next.js route handlers - LIVE di Vercel]
 │       ├── app/public/                   [12 endpoint publik]
-│       │   ├── health/route.ts
-│       │   ├── students/route.ts         [GET list + filter + pagination]
-│       │   ├── students/[id]/route.ts
-│       │   ├── students/birthdays/route.ts
-│       │   ├── teachers/route.ts
-│       │   ├── teachers/[id]/route.ts
-│       │   ├── sambutan/route.ts
-│       │   ├── sambutan/[id]/route.ts
-│       │   ├── sudut-sekolah/route.ts
-│       │   ├── sudut-sekolah/[id]/route.ts
-│       │   ├── videos/route.ts
-│       │   └── videos/[id]/route.ts
-│       ├── app/admin/images/             [Upload pipeline]
-│       │   ├── sign-upload/route.ts      [Signed URL generation]
-│       │   └── process/route.ts          [Sharp WebP variants]
+│       ├── app/admin/                    [NEW: semua CRUD endpoints]
+│       │   ├── students/route.ts + [id]  [POST, GET, PATCH, DELETE]
+│       │   ├── teachers/route.ts + [id]
+│       │   ├── sambutan/route.ts + [id]
+│       │   ├── sudut-sekolah/route.ts + [id]
+│       │   ├── videos/route.ts + [id]
+│       │   ├── admins/route.ts + [id]    [last-admin protection]
+│       │   └── images/                   [sign-upload + process]
+│       ├── app/auth/me/route.ts          [NEW: session verification]
 │       └── app/utils/
-│           ├── supabase.ts               [Admin client singleton]
-│           ├── auth.ts                    [JWT verify via jose]
-│           ├── admin-guard.ts            [JWT + whitelist check]
-│           └── image-processor.ts        [Sharp: 4 WebP variants]
+│           ├── admin-guard.ts, auth.ts, supabase.ts, image-processor.ts
 ├── packages/
-│   ├── shared/                           [@aksana/shared]
-│   │   └── src/
-│   │       ├── schemas/                  [Zod: student, teacher, sambutan, sudut, video]
-│   │       └── constants/                [kelas, jabatan, image-variants]
-│   └── db/                               [@aksana/db]
-│       ├── drizzle/                      [Migration files]
-│       └── src/
-│           ├── schema/                   [Drizzle: 6 tables]
-│           ├── seed/                     [bootstrap-admin.ts, from-original.ts]
-│           └── client.ts
-├── .github/workflows/ci.yml              [Lint + type-check + test + build]
+│   ├── shared/
+│   │   └── src/schemas/                  [Zod: datetime() → string() - FIXED]
+│   └── db/                               [Drizzle schema + seed scripts]
+├── .github/workflows/ci.yml
 ├── turbo.json, pnpm-workspace.yaml
-└── supabase/                             [Initialized, linked to cloud]
+└── supabase/
 ```
 
 ### Vercel Deployments
 
-- **aksana-29-web** (Next.js): LIVE — Hero, About, student count visible. **Env vars Supabase BELUM di-redeploy**.
-- **aksana-29-api** (Next.js route handlers): LIVE — `/public/health` works. **Env vars Supabase BELUM di-redeploy**.
+| Project | URL | Status |
+|---------|-----|--------|
+| **aksana-29-nextjs-web** | https://aksana-29-nextjs-web.vercel.app | LIVE - semua halaman publik + admin |
+| **aksana-29-nextjs-api** | https://aksana-29-nextjs-api-silk.vercel.app | LIVE - API routes di /public/* dan /admin/* |
+
+**Catatan penting:** API routes serve di root path (`/public/health`, `/admin/students`), BUKAN di `/api/public/health`. Helper fungsi (`api.ts`, `admin-api.ts`) sudah otomatis strip prefix `/api` dari path.
 
 ### Supabase (cloud, connected)
 
 - Tables: `allowed_admins`, `students`, `teachers`, `sambutan`, `sudut_sekolah`, `videos`
 - Bucket: `images` (public)
-- Auth: Google OAuth configured (Client ID + Client Secret set)
+- Auth: Google OAuth configured
 - Data seeded: 279 students, 60 teachers, 4 sambutan, 47 sudut-sekolah, 2 videos
 
-## Key Decisions
+### Testing
 
-1. **V5 = monorepo dengan FE/BE split** — `apps/web` (Next.js 14 RSC), `apps/api` (Next.js route handlers), `packages/{shared,db}`. Bukan NestJS murni (route handlers pakai Next.js format biar Vercel-compatible).
-2. **Supabase instead of Firebase** — Postgres via Drizzle ORM, Storage untuk images, Auth untuk Google OAuth. Migration ke cloud selesai.
-3. **Route handlers tanpa NestJS** — Awalnya pake NestJS `@Controller`, tapi Vercel gak kompatibel. Diganti ke `NextResponse`/`NextRequest` dari `next/server`. NestJS `main.ts` hanya untuk local dev via `vercel dev`.
-4. **Sharp offline untuk image processing** — Bukan di middleware. Endpoint `/admin/images/process` yang dipanggil setelah upload selesai, generates 4 WebP variants.
-5. **Data di-seed dari original JSON** — 279 siswa + 60 guru dari JSON, 4 sambutan dari HTML, 47 sudut sekolah dari JS, 2 video dari HTML galeri. Image migration via Sharp pipeline belum dijalankan.
+- **Shared (packages/shared)**: 22 tests pass (Vitest)
+- **API (apps/api)**: 31 tests pass (Jest)
+- **TypeScript**: Zero errors di shared, web, dan api
 
-## Next Steps (20 tasks remaining)
+## Key Decisions (added in this session)
 
-### Immediate: Admin Dashboard (Tasks 26-33)
+1. **Admin API routes menggunakan Next.js route handlers pattern** — sama dengan public routes. Setiap entitas punya `route.ts` (GET list + POST create) dan `[id]/route.ts` (GET single + PATCH update + DELETE). Semua diproteksi via `getAdminSession()` dari `admin-guard.ts`.
 
-1. **Task 26**: Admin layout + Sidebar component (`apps/web/components/admin/Sidebar.tsx`)
-2. **Task 27**: Admin CRUD Students — table + form page (`dashboard/students/`)
-3. **Tasks 28-31**: Admin CRUD Teachers, Sambutan, Sudut Sekolah, Videos — copy pattern dari Task 27
-4. **Task 32**: Whitelist management page (`dashboard/admins/`)
-5. **Task 33**: Admin image upload UI — drag-drop + progress bar + preview
+2. **API path tanpa `/api` prefix** — Karena API project root adalah `apps/api/`, route files di `apps/api/app/public/health/route.ts` serve di `/public/health`, bukan `/api/public/health`. Frontend helper strips `/api` prefix otomatis.
 
-### Setup: Vercel Redeploy
+3. **Zod `datetime()` diganti `string()`** — Supabase mengembalikan timestamp dalam format `2026-06-15T18:10:46.412346+00:00` yang tidak lolos validasi Zod `datetime()` (hanya terima format `Z` suffix). Semua schema di `packages/shared/src/schemas/` sudah diganti.
 
-6. **Redeploy both projects** setelah env vars Supabase diisi. Biar data dari Supabase tampil di web.
+4. **TypeScript `@ts-expect-error` untuk Supabase insert/update** — Tanpa generated types, Supabase JS client v2 meng-infer tipe sebagai `never` untuk `.insert()` dan `.update()`. Digunakan `@ts-expect-error` di setiap admin route yang memanggil operasi tersebut.
 
-### Polish & Deploy (Tasks 34-41)
+5. **Admin UI pages menggunakan client components** — Semua halaman admin adalah `'use client'` karena perlu akses ke Supabase Auth session untuk JWT token. `admin-api.ts` menggunakan dynamic import `@/lib/supabase/client` untuk mendapatkan token.
 
-7. **Task 34**: SEO meta tags per page (title, description, OG image)
-8. **Task 35**: Performance — ISR (`revalidate`), lazy loading, srcSet di semua image
-9. **Task 36**: Sentry integration
-10. **Task 37**: Testing — backend (Jest, already 17 tests), frontend (Vitest), E2E (Playwright)
-11. **Task 38**: Documentation — README, runbook, env setup
-12. **Task 39**: Domain configuration (Namecheap via GitHub Student Pack)
-13. **Task 40-41**: V3 archive + monitoring
+6. **Sidebar navigation menggunakan SVG icons inline** — Tidak perlu dependency icon library. 7 menu items + logout button, active state detection via `usePathname()`.
 
-## Key Credentials (redacted in handoff)
+## Files Changed (this session)
 
-- Supabase: project `rgaaltkrfjjutvgycibu`, URL/keys stored in local `.env` files (gitignored)
-- Vercel: `aksana-29-web` + `aksana-29-api` under kemal-faza GitHub
-- Google OAuth: configured in Supabase Auth providers
-- Admin email: `kemalfaza26@gmail.com` (bootstrap admin seeded)
+### New files (~40 files):
+- `apps/api/app/admin/*` — 14 files (CRUD routes untuk 6 entities + auth/me)
+- `apps/web/components/admin/*` — 8 files (Sidebar, DataTable, 5 Forms, ImageUpload)
+- `apps/web/app/(admin)/dashboard/*` — ~20 files (admin CRUD pages per entity)
+- `apps/web/app/(public)/*/layout.tsx` — 3 files (SEO metadata)
+- `apps/web/lib/admin-api.ts` — authenticated API helper
+
+### Modified files (~5 files):
+- `apps/web/lib/api.ts` — strip /api prefix
+- `apps/web/app/(admin)/layout.tsx` — sidebar integration
+- `apps/web/app/(admin)/dashboard/page.tsx` — stats dashboard
+- `packages/shared/src/schemas/*.ts` — datetime() → string()
+
+## Next Steps
+
+### Immediate: Public Frontend Components (~2 tasks)
+
+1. **Sambutan carousel di halaman beranda** — DB schema + API route sudah ada. Butuh komponen carousel (Swiper atau CSS) yang fetch dari `/public/sambutan` dan render di home page (`apps/web/app/page.tsx`). Lihat design spec di `docs/superpowers/specs/2026-06-15-aksana-29-design.md` section 7.1.
+
+2. **Sudut Sekolah carousel di halaman beranda** — Sama seperti di atas, butuh coverflow carousel. 49 foto fetch dari `/public/sudut-sekolah`. Swiper library mungkin perlu diinstall (`pnpm add swiper`).
+
+3. **Header/Navbar publik** — Navigasi antar halaman (Beranda, Guru, Pesdik, Galeri). Sticky/transparan di home, solid di halaman lain.
+
+4. **Footer** — Copyright, credit, links.
+
+### Polish & Deploy (Tasks 35-41)
+
+5. **Task 35**: Performance — ISR (`revalidate`), lazy loading, srcSet di semua image (sudah partial di `api.ts`).
+6. **Task 36**: Sentry integration (SENTRY_AUTH_TOKEN sudah ada di Vercel env vars).
+7. **Task 37**: Testing — frontend (Vitest), E2E (Playwright).
+8. **Task 38**: Documentation — README, runbook, env setup.
+9. **Task 39**: Domain configuration (Namecheap via GitHub Student Pack).
+10. **Task 40**: V3 archive (`aksana-29-route-version/`).
+11. **Task 41**: Monitor + 1-week stabilization.
 
 ## Open Questions
 
-- **Domain name?** Plan mentions Namecheap via GitHub Student Pack — belum dibeli/configured
-- **V3 archive?** Task 40 mentions archiving V3 project (`aksana-29-route-version/`). Belum ada instruksi spesifik
-- **Image migration?** 400+ images from original project belum di-upload ke Supabase Storage (Task 25 partial — hanya text data)
-- **Sambutan/Sudut Sekolah official photos?** Image paths di JSON masih referensi lokal (`img/homepage/...`), belum di-upload ke Supabase Storage
+- **Domain name?** Plan mentions Namecheap via GitHub Student Pack — belum dibeli/configured.
+- **V3 archive?** Task 40 mentions archiving V3 project (`aksana-29-route-version/`). Belum ada instruksi spesifik.
+- **Image migration?** 400+ images from original project belum di-upload ke Supabase Storage (Task 25 partial — hanya text data).
+- **Sambutan/Sudut Sekolah official photos?** Image paths di JSON masih referensi lokal (`img/homepage/...`), belum di-upload ke Supabase Storage.
+- **Sentry DSN?** SENTRY_AUTH_TOKEN ada di Vercel env vars tapi Sentry SDK belum diintegrasikan ke kode.
 
 ## Suggested Skills
 
-- `subagent-driven-development` — Admin CRUD pages (Tasks 26-33) highly parallelizable; each entity can be built independently
-- `dispatching-parallel-agents` — Tasks 27-31 (5 CRUD pages) independent + can run after Task 26 layout is ready
-- `test-driven-development` — For CRUD operations; write test for API endpoints before implementing
-- `search-first` — To find existing component patterns (StudentCard, TeacherCard) to match admin table/forms
-- `finishing-a-development-branch` — After all tasks complete, to verify tests + present merge/PR options
+- `subagent-driven-development` — Frontend components (carousel, navbar, footer) independent tasks
+- `systematic-debugging` — Jika API routes atau data flow bermasalah
+- `search-first` — Untuk cari pattern existing components sebelum buat carousel baru
+- `verification-before-completion` — Pastikan deploy sukses dan data tampil sebelum klaim selesai
+- `handoff` — Jika perlu melanjutkan di sesi berikutnya
 
 ## Risks / Gotchas
 
-- **Admin routes use middleware protection** — middleware.ts protects `/dashboard/*`. Admin CRUD pages must be under `app/(admin)/dashboard/` (route group) not `app/dashboard/`
-- **API route handlers use NextResponse** — Bukan Express/NestJS. Response helper functions should use `NextResponse.json()` from `next/server`
-- **Vercel API deployment berbeda** — Api project pakai Next.js preset, build pake `next build`, output ke `.next/`. File `vercel.json` yang lama (`buildCommand: "tsc"`, `outputDirectory: "dist"`) SUDAH DIHAPUS — jangan recreate
-- **Drizzle client di seed** — `db.query.X.findFirst()` tidak bekerja tanpa schema registry. Seed scripts harus pake `db.select().from(X).where(...)` langsung
-- **Supabase client type inference** — `.select('col1, col2')` dengan kolom spesifik return `never` type. Harus di-cast via `as unknown as Interface[]`
-- **All tests passing** — 17 API tests, 22 shared tests, semua pass. Jangan break
-- **Env files local** — `apps/web/.env.local`, `apps/api/.env`, `packages/db/.env` semua gitignored. Backup sebelum cleanup
-- **pnpm version** — Wajib `pnpm@10.30.2` (sesuai packageManager di root package.json)
+- **Swiper belum diinstall** — Untuk carousel sambutan dan sudut sekolah, perlu install `swiper` package via pnpm.
+- **API path without /api prefix** — Semua route di API project serve di root (`/public/health`, `/admin/students`). Jangan tambahin `/api` prefix di path. Helper `api.ts` dan `admin-api.ts` sudah strip otomatis.
+- **Supabase type inference** — Untuk insert/update, perlu `@ts-expect-error` karena tanpa generated types Supabase infer sebagai `never`.
+- **Zod schemas** — `created_at` dan `updated_at` pakai `z.string()` bukan `z.string().datetime()` karena format timestamp dari Supabase tidak kompatibel.
+- **Admin pages are client components** — Semua halaman admin `'use client'` karena perlu akses Supabase Auth session. Jangan coba convert ke server component tanpa refactor auth flow.
+- **All tests passing: 53 tests** — 22 shared (Vitest) + 31 API (Jest). Jangan break.
+- **Vercel project names** — `aksana-29-nextjs-web` (root: `apps/web`) dan `aksana-29-nextjs-api` (root: `apps/api`). Bukan `aksana-29-web` seperti handoff sebelumnya.
+- **pnpm version** — Wajib `pnpm@10.30.2` (sesuai packageManager di root package.json).
+- **Env files local** — `apps/web/.env.local`, `apps/api/.env`, `packages/db/.env` semua gitignored. Backup sebelum cleanup.
+- **Vercel CLI sudah terinstall** — Bisa pake `vercel logs`, `vercel deploy`, `vercel env` untuk debugging.
+- **NEXT_PUBLIC_API_URL sudah diupdate** — Set ke `https://aksana-29-nextjs-api-silk.vercel.app` di Vercel production env.

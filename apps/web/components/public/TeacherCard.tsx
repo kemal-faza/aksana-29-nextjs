@@ -12,6 +12,7 @@ export function TeacherCard({ teacher, onClick }: { teacher: TeacherPublic; onCl
             alt={teacher.nama}
             fill
             className="object-cover"
+            loading="lazy"
           />
         )}
       </div>

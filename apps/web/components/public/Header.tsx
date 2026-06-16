@@ -5,6 +5,21 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { KELAS_LIST } from '@aksana/shared';
 
+const KELAS_TO_SLUG: Record<string, string> = {
+  'XII IPA 1': 'xii-ipa-1',
+  'XII IPA 2': 'xii-ipa-2',
+  'XII IPA 3': 'xii-ipa-3',
+  'XII IPA 4': 'xii-ipa-4',
+  'XII IPS 1': 'xii-ips-1',
+  'XII IPS 2': 'xii-ips-2',
+  'XII IPS 3': 'xii-ips-3',
+  'XII PAI': 'xii-pai',
+};
+
+function kelasSlug(kelas: string): string {
+  return KELAS_TO_SLUG[kelas] || kelas.toLowerCase().replace(/\s+/g, '-');
+}
+
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -69,7 +84,7 @@ export function Header() {
                   {KELAS_LIST.map((kelas) => (
                     <Link
                       key={kelas}
-                      href={`/pesdik/${encodeURIComponent(kelas)}`}
+                      href={`/pesdik/${kelasSlug(kelas)}`}
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary transition-colors"
                     >
                       {kelas}
@@ -112,8 +127,8 @@ export function Header() {
               {KELAS_LIST.map((kelas) => (
                 <MobileNavLink
                   key={kelas}
-                  href={`/pesdik/${encodeURIComponent(kelas)}`}
-                  active={pathname === `/pesdik/${encodeURIComponent(kelas)}`}
+                  href={`/pesdik/${kelasSlug(kelas)}`}
+                  active={pathname === `/pesdik/${kelasSlug(kelas)}`}
                   small
                 >
                   {kelas}
