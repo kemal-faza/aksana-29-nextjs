@@ -24,11 +24,11 @@ export function SudutSekolahCarousel() {
 
   if (loading) {
     return (
-      <section className="py-16 px-4 bg-dark">
-        <div className="max-w-6xl mx-auto text-center">
+      <section className="py-24 px-16 bg-dark">
+        <div className="container mx-auto text-center">
           <div className="animate-pulse space-y-4">
-            <div className="h-8 w-48 bg-gray-700 rounded mx-auto" />
-            <div className="h-64 bg-gray-800 rounded-lg" />
+            <div className="h-8 w-48 bg-dark/50 rounded mx-auto" />
+            <div className="h-64 bg-dark/50 rounded-md" />
           </div>
         </div>
       </section>
@@ -38,13 +38,13 @@ export function SudutSekolahCarousel() {
   if (photos.length === 0) return null;
 
   return (
-    <section className="py-16 px-4 bg-dark">
-      <div className="max-w-6xl mx-auto">
-        <h2 className="text-3xl font-heading text-tersier text-center mb-10">
+    <section className="py-24 px-16 bg-dark">
+      <div className="container mx-auto">
+        <h2 className="text-2xl lg:text-3xl font-bold uppercase text-secondary text-center mb-10">
           Sudut Sekolah
         </h2>
 
-        <p className="text-gray-400 text-center mb-8 max-w-xl mx-auto">
+        <p className="text-ink-mute text-center mb-8 max-w-xl mx-auto">
           Kenangan dari setiap sudut MAN Kapuas yang akan selalu kami rindukan
         </p>
 
@@ -67,7 +67,7 @@ export function SudutSekolahCarousel() {
         >
           {photos.map((photo) => (
             <SwiperSlide key={photo.id} style={{ width: 'auto' }}>
-              <div className="relative w-[280px] h-[380px] md:w-[320px] md:h-[420px] rounded-xl overflow-hidden group shadow-lg">
+              <div className="relative w-70 aspect-[3/4] md:w-80 rounded-md overflow-hidden group shadow-lg">
                 <Image
                   src={getImageUrl(photo.image_path, 640)}
                   alt={photo.caption || 'Sudut Sekolah'}
@@ -76,8 +76,8 @@ export function SudutSekolahCarousel() {
                   sizes="(max-width: 640px) 280px, 320px"
                 />
                 {photo.caption && (
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-4 pt-12">
-                    <p className="text-white text-sm font-medium">{photo.caption}</p>
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-dark via-dark/50 to-transparent p-4 pt-12">
+                    <p className="text-secondary text-sm font-medium">{photo.caption}</p>
                   </div>
                 )}
               </div>
