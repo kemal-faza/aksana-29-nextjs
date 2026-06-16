@@ -1,3 +1,32 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  /* NavLink active state (DESIGN.md "Components > NavLink") */
+  nav a.active {
+    @apply bg-primary text-secondary
+           hover:bg-primary/80
+           lg:bg-secondary lg:text-primary
+           lg:hover:bg-secondary/80;
+  }
+
+  /* Hamburger line (DESIGN.md "Components > Hamburger Toggle") */
+  #hamburger span {
+    @apply block w-7 h-0.5 my-2.5 bg-primary
+           transition duration-300 origin-center;
+  }
+
+  /* Hamburger animated X -- toggled via #hamburger.active */
+  #hamburger.active span:nth-child(1) { @apply -rotate-45 origin-top-right; }
+  #hamburger.active span:nth-child(2) { @apply scale-0; }
+  #hamburger.active span:nth-child(3) { @apply rotate-45 origin-bottom-right; }
+
+  /* Mobile nav menu slide-in -- toggled via #nav-menu.active */
+  #nav-menu {
+    @apply -translate-y-[700px] shadow-2xl bg-secondary;
+  }
+  #nav-menu.active {
+    @apply translate-y-0;
+  }
+}
