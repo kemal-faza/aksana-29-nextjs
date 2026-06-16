@@ -9,14 +9,18 @@
     "push": "drizzle-kit push",
     "studio": "drizzle-kit studio",
     "seed:bootstrap": "tsx src/seed/bootstrap-admin.ts",
-    "seed:all": "tsx src/seed/from-original.ts"
+    "seed:all": "tsx src/seed/from-original.ts",
+    "migrate:images": "tsx src/seed/migrate-images.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.36.0",
     "postgres": "^3.4.5",
-    "tsx": "^4.19.0"
+    "tsx": "^4.19.0",
+    "sharp": "^0.33.5",
+    "@supabase/supabase-js": "^2.46.0"
   },
   "devDependencies": {
+    "@types/node": "^22.10.0",
     "drizzle-kit": "^0.28.0",
     "typescript": "^5.7.0"
   }
