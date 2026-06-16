@@ -11,8 +11,12 @@ export function Hero() {
         priority
       />
       <div className="relative z-10 text-center">
-        <h1 className="text-[18vw] font-heading text-white tracking-widest">AKSANA 29</h1>
-        <p className="text-tersier text-xl mt-4">MAN KAPUAS ANGKATAN KE-29</p>
+        <h1 className="text-[18vw] tracking-[2vw] font-extrabold font-heading text-secondary">
+          AKSANA 29
+        </h1>
+        <p className="text-[3vw] tracking-[1.3vw] font-extrabold text-secondary">
+          MAN KAPUAS ANGKATAN KE-29
+        </p>
       </div>
     </section>
   );

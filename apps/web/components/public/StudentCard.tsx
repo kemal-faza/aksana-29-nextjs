@@ -8,11 +8,18 @@ interface StudentCardProps {
   onClick: (student: StudentPublic) => void;
 }
 
+/**
+ * StudentCard per DESIGN.md "Components > Person Card (card-person)":
+ * - rounded-md overflow-hidden shadow-lg
+ * - bg-secondary text-primary
+ * - portrait 1080x1920 with srcSet
+ * - h4 name (text-lg font-semibold) + h5 jabatan (text-sm font-light border-b)
+ */
 export function StudentCard({ student, onClick }: StudentCardProps) {
   return (
     <button
       onClick={() => onClick(student)}
-      className="bg-white rounded-lg shadow overflow-hidden text-left hover:shadow-md transition-shadow w-full"
+      className="w-full bg-secondary text-primary rounded-md overflow-hidden shadow-lg text-left hover:shadow-md transition-shadow"
     >
       {student.image_path ? (
         <div className="relative aspect-[3/4] w-full">
@@ -26,17 +33,17 @@ export function StudentCard({ student, onClick }: StudentCardProps) {
           />
         </div>
       ) : (
-        <div className="aspect-[3/4] w-full bg-secondary flex items-center justify-center">
-          <span className="text-4xl text-gray-400 font-heading">
+        <div className="aspect-[3/4] w-full bg-canvas flex items-center justify-center">
+          <span className="text-4xl text-ink-placeholder font-heading">
             {student.nama.charAt(0)}
           </span>
         </div>
       )}
-      <div className="p-3">
-        <p className="font-semibold text-sm truncate">{student.nama}</p>
-        <p className="text-xs text-gray-500 truncate">
+      <div className="p-4">
+        <h4 className="text-lg font-semibold truncate">{student.nama}</h4>
+        <h5 className="text-sm font-light py-3 border-b border-primary/20 truncate">
           {student.jabatan || 'Anggota'}
-        </p>
+        </h5>
       </div>
     </button>
   );
