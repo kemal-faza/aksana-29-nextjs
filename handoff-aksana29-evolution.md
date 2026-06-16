@@ -1,199 +1,220 @@
-# Handoff: Aksana 29 v5 — ALL 41 TASKS COMPLETE
+# Handoff: Aksana 29 v5 — Session 4 (CORS Fix + DB Dedup)
 
 ## Summary
 
-Semua 41 tasks (Foundation + Data + Public + Auth + Image + Admin Dashboard + Frontend Components + Polish/Deploy) selesai. Monorepo (pnpm + Turborepo) dengan apps/web (Next.js 14) + apps/api (Next.js route handlers) + packages/{shared,db}. Public site live dengan 279 students, 60 teachers, 4 sambutan, 47 sudut sekolah, 2 videos dari Supabase. Admin Dashboard lengkap dengan CRUD untuk semua entitas + whitelist management + image upload UI. Google OAuth + JWT verify + admin guard terpasang. Frontend publik: Navbar (scroll-aware), Footer, Sambutan Swiper carousel, Sudut Sekolah Swiper coverflow. Deployed ke Vercel, web dan API keduanya live.
-
-Tersisa: (1) Image migration ~400 foto dari project original ke Supabase Storage (ada script auto: `pnpm migrate:images`), (2) Push + deploy ke Vercel (butuh koneksi internet), (3) DNS domain (Namecheap via GitHub Student Pack).
+Session 4: dua fix penting. **(1) CORS bug** yang ngeblok dashboard dari fetch API — di-fix dengan Next.js middleware + extracted helper (commit `e278935`, BELUM di-push). **(2) DB duplicates** (1114 students, 240 teachers, 8 sambutan — semua 4x lipat) — di-fix dengan script dedup TDD'd (`packages/db/src/seed/dedupe-*.ts`) + refactor generic API. Students sudah di-apply (279), teachers + sambutan siap di-apply.
 
 ## Current State
 
 ### Git
 
 - Branch: main
-- 34 commits sejak start (commit terakhir: `09826e2`)
-- Working tree: clean (ada untracked DESIGN.md dari sesi sebelumnya — abaikan/gitignore)
-- Remote: `origin` pointing to `github.com:kemal-faza/aksana-29-nextjs.git`
+- 36 commits sejak start (commit terakhir: `e278935 fix(api): add CORS middleware for production deployment`)
+- **CORS fix BELUM di-push** — ini blocker untuk dashboard live
+- Working tree (uncommitted, related to session 4):
+  - Modified: `packages/db/package.json` (added vitest + 2 new dedupe scripts), `packages/db/src/seed/dedupe.ts` (refactored generic), `packages/db/src/seed/dedupe-students.ts` (uses generic now)
+  - Untracked: `packages/db/src/seed/dedupe-teachers.ts`, `packages/db/src/seed/dedupe-sambutan.ts`, `packages/db/src/seed/dedupe.test.ts`
+  - Untracked: `MEMORY.md` (cross-session memory), `memory/2026-06-16.md` (daily notes)
 
-### Arsitektur Terbangun (update dari handoff sebelumnya)
+### Arsitektur (delta session 4)
 
 ```
-aksana-29-nextjs/
-├── apps/
-│   ├── web/                              [Next.js 14 - LIVE di Vercel]
-│   │   ├── app/(public)/                 [Semua halaman publik]
-│   │   │   ├── layout.tsx                [SEO metadata - NEW]
-│   │   │   ├── page.tsx                  [Hero + About + Birthday]
-│   │   │   ├── guru/page.tsx + layout.tsx [SEO - NEW layout]
-│   │   │   ├── pesdik/[kelas]/page.tsx + layout.tsx [Dynamic metadata - NEW]
-│   │   │   └── galeri/page.tsx + layout.tsx [SEO - NEW layout]
-│   │   ├── app/(admin)/                  [Protected routes]
-│   │   │   ├── layout.tsx                [Sidebar + main layout - MODIFIED]
-│   │   │   ├── login/page.tsx
-│   │   │   └── dashboard/
-│   │   │       ├── page.tsx              [Stats dashboard - MODIFIED]
-│   │   │       ├── students/             [CRUD: list + create + edit - NEW]
-│   │   │       ├── teachers/             [CRUD: list + create + edit - NEW]
-│   │   │       ├── sambutan/             [CRUD: list + create + edit - NEW]
-│   │   │       ├── sudut-sekolah/        [CRUD: list + create + edit - NEW]
-│   │   │       ├── gallery/              [CRUD: list + create + edit - NEW]
-│   │   │       └── admins/               [Whitelist management - NEW]
-│   │   ├── components/
-│   │   │   ├── public/                   [NEW: Header, Footer, 2 Carousels + existing components]
-│   │   │   │   ├── Header.tsx            [scroll-aware, dropdown kelas, mobile menu]
-│   │   │   │   ├── Footer.tsx            [copyright + credits]
-│   │   │   │   ├── SambutanCarousel.tsx  [Swiper: 4 officials' messages]
-│   │   │   │   └── SudutSekolahCarousel.tsx [Swiper coverflow: 49 photos]
-│   │   │   └── admin/                    [Sidebar, DataTable, Forms, ImageUpload]
-│   │   ├── lib/
-│   │   │   ├── api.ts                    [Fetch wrapper - MODIFIED: strip /api prefix]
-│   │   │   ├── admin-api.ts              [NEW: auth-aware fetch with JWT]
-│   │   │   ├── images.ts
-│   │   │   └── supabase/
-│   │   └── app/auth/callback/route.ts
-│   └── api/                              [Next.js route handlers - LIVE di Vercel]
-│       ├── app/public/                   [12 endpoint publik]
-│       ├── app/admin/                    [NEW: semua CRUD endpoints]
-│       │   ├── students/route.ts + [id]  [POST, GET, PATCH, DELETE]
-│       │   ├── teachers/route.ts + [id]
-│       │   ├── sambutan/route.ts + [id]
-│       │   ├── sudut-sekolah/route.ts + [id]
-│       │   ├── videos/route.ts + [id]
-│       │   ├── admins/route.ts + [id]    [last-admin protection]
-│       │   └── images/                   [sign-upload + process]
-│       ├── app/auth/me/route.ts          [NEW: session verification]
-│       └── app/utils/
-│           ├── admin-guard.ts, auth.ts, supabase.ts, image-processor.ts
-├── packages/
-│   ├── shared/
-│   │   └── src/schemas/                  [Zod: datetime() → string() - FIXED]
-│   └── db/                               [Drizzle schema + seed scripts]
-├── .github/workflows/ci.yml
-├── turbo.json, pnpm-workspace.yaml
-└── supabase/
+packages/db/src/seed/
+├── dedupe.ts                       [REFACTORED: generic + 3 entity specs]
+├── dedupe.test.ts                  [NEW: 38 unit tests, TDD'd]
+├── dedupe-students.ts              [Works via wrapper, still functional]
+├── dedupe-teachers.ts              [NEW: uses teacherSpec]
+└── dedupe-sambutan.ts              [NEW: uses sambutanSpec]
+
+apps/api/
+├── middleware.ts                   [NEW: CORS Next.js middleware]
+└── app/utils/cors.ts               [NEW: testable CORS helper, 14 tests]
 ```
 
-### Vercel Deployments
+### Database Status (LIVE, after students dedup applied)
+
+| Table | Total | Expected unique | Action |
+|-------|-------|-----------------|--------|
+| students | **279** | 279 | DONE (applied) |
+| teachers | 240 | 60 | Ready (script tested, dry-run OK) |
+| sambutan | 8 | 4 | Ready (script tested, dry-run OK) |
+| sudut_sekolah | 47 | 47 | No dedup needed (per handoff) |
+| videos | 2 | 2 | No dedup needed (per handoff) |
+
+### Vercel Deployments (unchanged from session 2)
 
 | Project | URL | Status |
 |---------|-----|--------|
-| **aksana-29-nextjs-web** | https://aksana-29-nextjs-web.vercel.app | LIVE - semua halaman publik + admin |
-| **aksana-29-nextjs-api** | https://aksana-29-nextjs-api-silk.vercel.app | LIVE - API routes di /public/* dan /admin/* |
+| **aksana-29-nextjs-web** | https://aksana-29-nextjs-web.vercel.app | LIVE — CORS fix will make dashboard populated |
+| **aksana-29-nextjs-api** | https://aksana-29-nextjs-api-silk.vercel.app | LIVE — middleware added but needs push + redeploy |
 
-**Catatan penting:** API routes serve di root path (`/public/health`, `/admin/students`), BUKAN di `/api/public/health`. Helper fungsi (`api.ts`, `admin-api.ts`) sudah otomatis strip prefix `/api` dari path.
+**CORS_ORIGIN env var**: Set to `https://aksana-29-nextjs-web.vercel.app,*.vercel.app` on API project per user. But middleware isn't in production yet (not pushed), so CORS still failing.
 
-### Supabase (cloud, connected)
+## Key Decisions (session 4)
 
-- Tables: `allowed_admins`, `students`, `teachers`, `sambutan`, `sudut_sekolah`, `videos`
-- Bucket: `images` (public)
-- Auth: Google OAuth configured
-- Data seeded: 279 students, 60 teachers, 4 sambutan, 47 sudut-sekolah, 2 videos
+### CORS Fix
 
-### Testing
+1. **Root cause**: `app.enableCors()` di `apps/api/app/main.ts` HANYA untuk local NestJS dev server. Production Vercel pakai `next build` → Next.js route handlers, TIDAK inherit CORS config itu. Confirmed via curl: OPTIONS preflight return 204 dengan NO `Access-Control-Allow-Origin`.
 
-- **Shared (packages/shared)**: 22 tests pass (Vitest)
-- **API (apps/api)**: 31 tests pass (Jest)
-- **Web (apps/web)**: 4 tests pass (Vitest) — api utility tests
-- **Total**: 57 tests pass
-- **TypeScript**: Zero errors di shared, web, dan api
-- **Build**: Next.js build sukses untuk semua 27+ routes
+2. **CORS logic extracted** ke `apps/api/app/utils/cors.ts` (testable pure functions: `parseAllowedOrigins`, `matchOrigin` dengan `*.vercel.app` wildcard, `applyCors`, `handlePreflight`). Middleware cuma thin wrapper yang call helper.
 
-## Key Decisions (added in session 2)
+3. **Wildcard `*.vercel.app`** untuk preview deployments. Trade-off: less strict matching, tapi worth it untuk DX preview.
 
-1. **Swiper untuk carousel** — Swiper dipilih karena sudah di-tech stack plan, punya module navigation/pagination/autoplay yang cocok untuk Sambutan (card-style, manual nav) dan Sudut Sekolah (coverflow, autoplay loop). Tidak perlu install library carousel lain.
+### DB Dedup
 
-2. **Header slug URLs** — Link kelas di navbar menggunakan slug format (`/pesdik/xii-ipa-1`) bukan encoded format (`/pesdik/XII%20IPA%201`) karena halaman pesdik menggunakan slug pattern di route handler. Ini diperbaiki setelah ditemukan mismatch saat implementasi.
+4. **"Most complete wins" strategy** — score = jumlah non-empty fields (imagePath, kesan, pesan, ttl untuk students; imagePath+ekstra+mapel untuk teachers; imagePath+isi untuk sambutan). Tie-break on latest `createdAt`. Rationale: preserves manual edits admin mungkin udah edit, falls back ke "newest" kalau sama-sama lengkap.
 
-3. **Sentry ditempatkan di `apps/web/`** — Sentry wizard awalnya generate file di root monorepo, tapi Next.js hanya membaca config dari direktori app-nya sendiri (`apps/web/`). Semua sentry config dipindahkan ke `apps/web/` dan `next.config.mjs` di-wrap dengan `withSentryConfig`.
+5. **Generic dedup API** — `buildDeletePlanGeneric<T>(rows, spec)` + `DedupSpec<T>` interface (`getKey`, `getScore`, `getCreatedAt`). Entity specs (`studentSpec`, `teacherSpec`, `sambutanSpec`) adalah thin objects. Reusable untuk entity lain.
 
-4. **Image migration sebagai script terpisah** — Bukan bagian dari `from-original.ts` karena image migration butuh `sharp` + `@supabase/supabase-js` yang tidak ada di `packages/db` sebelumnya. Ditambahkan sebagai dep + script `migrate:images`.
+6. **TDD vertical slices** — pisah jadi 4 functions (score, pick, group, build) bukan 1 monolithic. 38 unit tests total. Logic 100% testable tanpa DB.
 
-5. **Sambutan manual mapping** — JSON original tidak punya referensi image untuk sambutan (semua empty string). Hanya KH. Parhani yang punya foto di `img/homepage/sambutan/Guru Parhani.JPG`. 3 pejabat lain (Mulyadi, Jumirah, Paidi) tidak ada foto di original project, jadi `image_path` tetap `null` di DB.
+7. **Backward compat preserved** — student-specific `scoreRow`, `pickBest`, `groupByKey`, `buildDeletePlan` masih ada (marked `@deprecated`) supaya existing 23 student tests tidak perlu diubah.
 
-1. **Admin API routes menggunakan Next.js route handlers pattern** — sama dengan public routes. Setiap entitas punya `route.ts` (GET list + POST create) dan `[id]/route.ts` (GET single + PATCH update + DELETE). Semua diproteksi via `getAdminSession()` dari `admin-guard.ts`.
+8. **Teacher grouping by `nama` only** (not `nama+jabatan`) — handles promotion case (Guru → Wakamad). Trade-off: kalau ada同名 guru beda orang, akan di-merge. Acceptable risk karena guru biasanya unik by nama.
 
-2. **API path tanpa `/api` prefix** — Karena API project root adalah `apps/api/`, route files di `apps/api/app/public/health/route.ts` serve di `/public/health`, bukan `/api/public/health`. Frontend helper strips `/api` prefix otomatis.
+9. **No UNIQUE constraint added yet** — current dedup is reactive (script-based). Untuk prevent re-duplication di future, perlu:
+   ```sql
+   ALTER TABLE students ADD CONSTRAINT students_nama_kelas_unique UNIQUE (nama, kelas);
+   ALTER TABLE teachers ADD CONSTRAINT teachers_nama_unique UNIQUE (nama);
+   ALTER TABLE sambutan ADD CONSTRAINT sambutan_nama_unique UNIQUE (nama);
+   ```
+   Plus update seed script: `onConflictDoNothing({ target: [students.nama, students.kelas] })`.
 
-3. **Zod `datetime()` diganti `string()`** — Supabase mengembalikan timestamp dalam format `2026-06-15T18:10:46.412346+00:00` yang tidak lolos validasi Zod `datetime()` (hanya terima format `Z` suffix). Semua schema di `packages/shared/src/schemas/` sudah diganti.
+## Files Changed (session 4)
 
-4. **TypeScript `@ts-expect-error` untuk Supabase insert/update** — Tanpa generated types, Supabase JS client v2 meng-infer tipe sebagai `never` untuk `.insert()` dan `.update()`. Digunakan `@ts-expect-error` di setiap admin route yang memanggil operasi tersebut.
+### CORS Fix (committed, NOT pushed):
+- `apps/api/middleware.ts` — 32 baris, Next.js middleware entry
+- `apps/api/app/utils/cors.ts` — 153 baris, testable CORS helper
+- `apps/api/__tests__/cors.test.ts` — 154 baris, 14 test cases
+- `.env.example` — Added CORS_ORIGIN documentation
 
-5. **Admin UI pages menggunakan client components** — Semua halaman admin adalah `'use client'` karena perlu akses ke Supabase Auth session untuk JWT token. `admin-api.ts` menggunakan dynamic import `@/lib/supabase/client` untuk mendapatkan token.
+### DB Dedup (NOT committed):
+- `packages/db/src/seed/dedupe.ts` — REFACTORED ke generic (~230 baris)
+- `packages/db/src/seed/dedupe.test.ts` — NEW, 38 tests (~380 baris)
+- `packages/db/src/seed/dedupe-students.ts` — modified to use generic internally
+- `packages/db/src/seed/dedupe-teachers.ts` — NEW (~130 baris)
+- `packages/db/src/seed/dedupe-sambutan.ts` — NEW (~130 baris)
+- `packages/db/package.json` — Added vitest devDep, 2 new dedupe scripts, test script
+- `packages/db/src/seed/migrate-images.ts` — pre-existing modification (not mine)
 
-6. **Sidebar navigation menggunakan SVG icons inline** — Tidak perlu dependency icon library. 7 menu items + logout button, active state detection via `usePathname()`.
-
-## Files Changed (session 2: Public Frontend + Polish/Deploy)
-
-### New files (session 2):
-- `apps/web/components/public/Header.tsx` — scroll-aware navbar
-- `apps/web/components/public/Footer.tsx` — footer dengan credits
-- `apps/web/components/public/SambutanCarousel.tsx` — Swiper carousel untuk 4 pejabat
-- `apps/web/components/public/SudutSekolahCarousel.tsx` — Swiper coverflow untuk 49 foto
-- `apps/web/vitest.config.ts` — frontend test config
-- `apps/web/__tests__/api.test.ts` — 4 tests untuk api utility
-- `apps/web/sentry.server.config.js` + `sentry.edge.config.js` — Sentry configs
-- `apps/web/instrumentation.js` + `instrumentation-client.js` — Sentry instrumentation
-- `packages/db/src/seed/migrate-images.ts` — image migration script
-- `README.md` — dokumentasi lengkap
-
-### Modified files (session 2):
-- `apps/web/next.config.mjs` — wrapped with `withSentryConfig`
-- `apps/web/app/(public)/layout.tsx` — added Header + Footer wrappers
-- `apps/web/app/page.tsx` — added SambutanCarousel + SudutSekolahCarousel
-- `apps/web/components/public/Header.tsx` — fixed slug URLs for kelas dropdown
-- `apps/web/components/public/StudentCard.tsx` — added `loading="lazy"`
-- `apps/web/components/public/TeacherCard.tsx` — added `loading="lazy"`
-- `packages/db/package.json` — added sharp, supabase, types/node deps
+### Memory/Docs (NOT committed):
+- `MEMORY.md` — Long-term cross-session memory
+- `memory/2026-06-16.md` — Daily notes
+- `handoff-aksana29-evolution.md` — This file
 
 ## Next Steps
 
-### Immediate: Deploy & Image Migration
+### Immediate (CRITICAL — block dashboard data):
 
-1. **Push to GitHub + Vercel auto-deploy** — `git push origin main` saat koneksi internet tersedia. Build sudah diverifikasi sukses.
-2. **Image migration** — Jalankan script: `cd packages/db && SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... SUPABASE_DB_URL=... pnpm migrate:images`. Akan upload ~400 foto ke Supabase Storage + update `image_path` di DB.
-3. **Domain configuration** — `aksana-29.me` via Namecheap (GitHub Student Pack), arahkan ke Vercel.
+1. **Push commit `e278935` ke remote**:
+   ```bash
+   git push origin main
+   ```
+   Vercel akan auto-deploy API dengan middleware. Tunggu ~1-2 menit.
 
-### Polish & Deploy (Tasks 35-41 — ALL COMPLETE in code)
+2. **Verify CORS live**:
+   ```bash
+   curl -sI -X OPTIONS https://aksana-29-nextjs-api-silk.vercel.app/admin/students \
+     -H "Origin: https://aksana-29-nextjs-web.vercel.app" \
+     -H "Access-Control-Request-Method: GET" \
+     -H "Access-Control-Request-Headers: authorization,content-type"
+   ```
+   Harus return `access-control-allow-origin: https://aksana-29-nextjs-web.vercel.app`.
 
-| Task | Status | Notes |
-|------|--------|-------|
-| Task 34 SEO meta tags | DONE | OG tags di semua halaman |
-| Task 35 Performance | DONE | `loading="lazy"`, `revalidate:60`, `sizes` attributes |
-| Task 36 Sentry | DONE | Config files + `withSentryConfig` di `next.config.mjs` |
-| Task 37 Testing | DONE | 57 total tests (22 shared + 31 api + 4 web) |
-| Task 38 Documentation | DONE | README.md lengkap |
-| Task 39 Deploy + DNS | PENDING | Butuh git push + domain config |
-| Task 40 V3 archive | DONE | Project exists at `aksana-29-route-version/` |
-| Task 41 Monitor | PENDING | Observasional 1 minggu |
+3. **Refresh dashboard siswa** di browser — console CORS error hilang, tabel populated dengan 279 rows (bukan 1114).
 
-## Open Questions (Resolved)
+4. **Apply teachers + sambutan dedup**:
+   ```bash
+   cd packages/db
+   set -a && . ./.env && set +a
+   pnpm --filter @aksana/db dedupe:teachers -- --apply
+   pnpm --filter @aksana/db dedupe:sambutan -- --apply
+   ```
+   Backup files akan auto-generated di `packages/db/src/seed/backup-{entity}-{timestamp}.json`.
 
-- **Domain name?** Menggunakan `aksana-29.me` (Namecheap via GitHub Student Pack) — belum dibeli/di-configure.
-- **Image migration?** Ada script otomatis: `packages/db/src/seed/migrate-images.ts`. Jalankan via `pnpm migrate:images` dengan env vars yang benar.
-- **Sambutan/Sudut Sekolah photos?** Hanya KH. Parhani yang punya foto di original (`Guru Parhani.JPG`). 3 pejabat lain tidak ada foto individual di project original. Script handling manual mapping.
-- **Sentry DSN?** Sudah terkonfigurasi di `sentry.server.config.js`, `sentry.edge.config.js`, dan `next.config.mjs`. DSN dari Sentry Education plan. Auth token perlu di-set di Vercel env vars.
+5. **Verify counts**:
+   - `curl "https://.../public/teachers?limit=1" | jq '.total'` → should be 60
+   - `curl "https://.../public/sambutan?limit=1" | jq '.total'` → should be 4
+   - `curl "https://.../public/students?limit=1" | jq '.total'` → should be 279
+
+### After fix verified:
+
+6. **Add UNIQUE constraints di Supabase** (prevent re-duplication):
+   - Via Supabase Dashboard SQL Editor, atau
+   - Create migration file: `packages/db/drizzle/000X_add_unique_constraints.sql`
+
+7. **Fix seed scripts** di `packages/db/src/seed/from-original.ts`:
+   ```ts
+   // Was: .onConflictDoNothing() — broken for UUID PK
+   // Now: .onConflictDoNothing({ target: [students.nama, students.kelas] })
+   await db.insert(students).values(item).onConflictDoNothing({
+     target: [students.nama, students.kelas],
+   });
+   ```
+   Same for teachers (target: `teachers.nama`) dan sambutan (target: `sambutan.nama`).
+
+8. **Commit all session 4 work** (CORS + dedup + memory files). Recommend two commits:
+   - `fix(api): add CORS middleware` (already exists as e278935, will be included in push)
+   - `feat(db): add dedup scripts with generic API` (the new uncommitted work)
+
+9. **Consider commit pre-existing modifications**:
+   - `handoff-aksana29-evolution.md` (this file)
+   - `packages/db/src/seed/migrate-images.ts`
+   - `memory/2026-06-16.md` (my daily notes)
+   - `MEMORY.md` (long-term memory)
+
+## Open Questions
+
+- **DB unique constraints**: Add via Supabase dashboard atau Drizzle migration? Trend di project: prefer dashboard untuk one-off SQL, prefer migration untuk repeatable. Belum diputuskan.
+- **Teacher grouping strictness**: Current = `nama` only. Kalau ada同名 guru beda orang (kemungkinan kecil), admin harus merge manual via dashboard. Acceptable untuk sekarang.
+- **Sudut sekolah dedup needed?**: 47 records per handoff = no duplicates. Tidak perlu script. Tapi kalau seed dijalankan lagi di future, harus ada unique constraint di `sudut_sekolah.image_path` untuk prevent duplicates.
+- **Orphan images di Supabase Storage**: 4x images per student (835 deleted rows × 4 variants × 4 sizes = ~13,360 orphan files). Storage cost naik. Optional cleanup: list + delete files yang tidak referenced lagi di DB. Out of scope untuk session 4.
 
 ## Suggested Skills
 
-- `subagent-driven-development` — Frontend components (carousel, navbar, footer) independent tasks
-- `systematic-debugging` — Jika API routes atau data flow bermasalah
-- `search-first` — Untuk cari pattern existing components sebelum buat carousel baru
-- `verification-before-completion` — Pastikan deploy sukses dan data tampil sebelum klaim selesai
-- `handoff` — Jika perlu melanjutkan di sesi berikutnya
+- **`test-driven-development`** — Pattern `extract pure logic + thin script wrapper` sangat reusable. Lihat `dedupe.ts` + `cors.ts` sebagai referensi. Setiap logic yang involve CLI flags, I/O, atau DB harus pisah jadi testable pure function.
+- **`systematic-debugging`** — Kalau CORS masih error setelah push + redeploy, cek Vercel deployment logs (kalau ada), reproduksi dengan curl, cek apakah middleware.ts ada di build output.
+- **`verification-before-completion`** — Jangan klaim "fixed" sampai: (1) test pass, (2) type-check clean, (3) curl ke production return expected headers/data, (4) browser verify.
+- **`search-first`** — Sebelum bikin pattern baru, cek existing patterns di codebase. `apps/web/middleware.ts` (Supabase session) bisa jadi referensi.
+- **`handoff`** — Untuk continue di session berikutnya (e.g. UNIQUE constraints, seed fix, commit, cleanup orphan images).
 
 ## Risks / Gotchas
 
-- **API path without /api prefix** — Semua route di API project serve di root (`/public/health`, `/admin/students`). Jangan tambahin `/api` prefix di path. Helper `api.ts` dan `admin-api.ts` sudah strip otomatis.
-- **Supabase type inference** — Untuk insert/update, perlu `@ts-expect-error` karena tanpa generated types Supabase infer sebagai `never`.
-- **Zod schemas** — `created_at` dan `updated_at` pakai `z.string()` bukan `z.string().datetime()` karena format timestamp dari Supabase tidak kompatibel.
-- **Admin pages are client components** — Semua halaman admin `'use client'` karena perlu akses Supabase Auth session. Jangan coba convert ke server component tanpa refactor auth flow.
-- **All tests passing: 57 tests** — 22 shared (Vitest) + 31 API (Jest) + 4 web (Vitest). Jangan break.
-- **Vercel project names** — `aksana-29-nextjs-web` (root: `apps/web`) dan `aksana-29-nextjs-api` (root: `apps/api`). Bukan `aksana-29-web` seperti handoff sebelumnya.
-- **pnpm version** — Wajib `pnpm@10.30.2` (sesuai packageManager di root package.json).
-- **Env files local** — `apps/web/.env.local`, `apps/api/.env`, `packages/db/.env` semua gitignored. Backup sebelum cleanup.
-- **Vercel CLI sudah terinstall** — Bisa pake `vercel logs`, `vercel deploy`, `vercel env` untuk debugging.
-- **NEXT_PUBLIC_API_URL sudah diupdate** — Set ke `https://aksana-29-nextjs-api-silk.vercel.app` di Vercel production env.
-- **Image path mismatch** — DB saat ini menyimpan `image_path` sebagai filename lokal (contoh: `57277476e4deb5c282144fd813d0fe0d.JPG`), BUKAN path Supabase Storage. Frontend `getImageUrl()` akan generate URL yang salah sampai migration script dijalankan.
-- **Image migration butuh env vars** — Script `migrate:images` perlu `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, dan `SUPABASE_DB_URL`. Pastikan semua di-set sebelum run.
-- **Sambutan photos terbatas** — Dari 4 pejabat, hanya KH. Parhani yang punya foto di project original. 3 lainnya (`image_path = null` di DB) tidak akan muncul foto di carousel.
-- **Build success with Sentry** — Build web berhasil dengan Sentry instrumentation. Pastikan `SENTRY_AUTH_TOKEN` di-set di Vercel env vars untuk source map upload.
+### CORS-specific:
+
+- **Vercel deploy from git, not working tree** — INI ROOT CAUSE kenapa user set env var + redeploy tapi CORS masih error di session sebelumnya. Files harus di-commit + push SEBELUM Vercel bisa include-nya.
+- **CORS_ORIGIN TIDAK opsional untuk production** — Tanpa env var, middleware fallback ke `http://localhost:3000` saja. Production frontend akan ke-block.
+- **Preflight cache 24 jam** — `Access-Control-Max-Age: 86400`. Kalau CORS rules berubah, user mungkin perlu hard refresh (Ctrl+Shift+R).
+- **Edge runtime limits** — Middleware TIDAK bisa pakai Node.js APIs (fs, child_process). CORS logic saat ini pure, tapi kalau extend ke auth/rate-limit, perlu hati-hati.
+- **CORS_ORIGIN value**: User set `https://aksana-29-nextjs-web.vercel.app,*.vercel.app`. Untuk custom domain (`aksana-29.me`), harus di-explicit add nanti.
+
+### DB Dedup-specific:
+
+- **Students already deduped (279)** — User applied --apply di session sebelumnya. 835 rows deleted, backup di `packages/db/src/seed/backup-students-{timestamp}.json`. Kalau perlu revert, restore dari backup.
+- **Teacher/sambutan scripts NOT applied** — only dry-run tested. 180 teacher + 4 sambutan rows ready to delete setelah user run --apply.
+- **Script idempotent**: Re-running setelah dedup selesai akan exit early ("No duplicates found"). Aman.
+- **Backup files**: Akan di-generate di `packages/db/src/seed/` directory. Bisa di-gitignore atau dipindah ke `backups/` setelah selesai.
+- **Pre-existing Drizzle type error** di `from-original.ts` (line 211) — UNRELATED to session 4 work, sudah ada sebelum session 4. Type-check packages/db akan fail karena ini. Bisa di-fix nanti atau pakai `@ts-expect-error`.
+
+### Carry over dari session sebelumnya:
+
+- **API path tanpa `/api` prefix** — Helper `api.ts` dan `admin-api.ts` strip otomatis.
+- **Supabase type inference** — Insert/update butuh `@ts-expect-error`.
+- **Zod schemas** — `created_at`/`updated_at` pakai `z.string()` bukan `z.string().datetime()`.
+- **Admin pages client components** — Semua `'use client'`.
+- **Tests: 109 pass** (was 57, +52 dari CORS + dedup).
+- **Vercel projects** — `aksana-29-nextjs-web` (apps/web) + `aksana-29-nextjs-api-silk` (apps/api).
+- **pnpm version** — Wajib `pnpm@10.30.2`.
+- **Image paths sudah canonical** — `images/{entity}/{uuid}/1080.webp`.
+- **1 foto siswa masih skip** — `241925fd1a205eb105b56fb4245d4a8d.JPG` (8.3MB) belum terupload.
+- **Sentry auth token** — Perlu di-set `SENTRY_AUTH_TOKEN` di Vercel env vars.
+
+### Key insight untuk Next.js hybrid (NestJS+Next.js) projects:
+
+Kalau ada bug CORS di Next.js production tapi works di local, **cek dulu apakah CORS config ada di code yang bener jalan di production**. Pattern umum:
+- `app.enableCors()` (NestJS) → cuma local dev
+- `cors()` middleware (Express) → cuma local dev
+- `headers()` di `next.config.mjs` → global, inflexible
+- `middleware.ts` Next.js → **jalan di production** ← yang kita pakai
+
+Untuk project yang sama-sama punya NestJS dev + Next.js route handlers, **WAJIB** setup CORS di kedua tempat atau switch ke Next.js-only runtime.
