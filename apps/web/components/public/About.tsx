@@ -11,12 +11,14 @@ const aboutCards = [
 
 export function About() {
   return (
-    <section className="py-20 px-4">
-      <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8">
+    <section className="py-24 px-4">
+      <div className="container mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 justify-center">
         {aboutCards.map((card) => (
-          <div key={card.title} className="p-6 bg-white rounded-lg shadow">
-            <h2 className="text-2xl font-heading text-primary mb-3">{card.title}</h2>
-            <p className="text-dark">{card.body}</p>
+          <div key={card.title} className="p-6 bg-canvas rounded-md overflow-hidden shadow-lg">
+            <h2 className="text-2xl lg:text-3xl font-bold uppercase text-primary mb-3 text-center">
+              {card.title}
+            </h2>
+            <p className="text-ink text-center">{card.body}</p>
           </div>
         ))}
       </div>

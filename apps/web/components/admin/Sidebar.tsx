@@ -26,7 +26,7 @@ export function Sidebar() {
   return (
     <aside className="w-64 bg-dark min-h-screen flex flex-col">
       <div className="p-6">
-        <Link href="/dashboard" className="text-2xl font-heading text-tersier tracking-wider">
+        <Link href="/dashboard" className="text-2xl font-heading text-tertiary tracking-wider">
           AKSANA 29
         </Link>
         <p className="text-gray-400 text-sm mt-1">Dasbor Admin</p>

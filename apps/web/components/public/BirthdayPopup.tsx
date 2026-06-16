@@ -16,7 +16,7 @@ export function BirthdayPopup({ students }: BirthdayPopupProps) {
         ? `<b>${students[0].nama}</b><br/>${students[0].kelas}`
         : students.map(s => `<b>${s.nama}</b> (${s.kelas})`).join('<br/>'),
       icon: 'success',
-      confirmButtonColor: '#065f46',
+      confirmButtonColor: 'var(--tw-color-primary)',
       timer: 5000,
       timerProgressBar: true,
     });

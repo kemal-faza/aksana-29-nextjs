@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { apiGet } from '@/lib/api';
 import { TeacherCard } from '@/components/public/TeacherCard';
 import { TeacherModal } from '@/components/public/TeacherModal';
+import { SearchBar } from '@/components/public/SearchBar';
 import { JABATAN_PRIORITY } from '@aksana/shared';
 import type { TeacherPublic } from '@aksana/shared';
 
@@ -35,22 +36,24 @@ export default function GuruPage() {
   );
 
   return (
-    <main className="max-w-6xl mx-auto p-6">
-      <h1 className="text-3xl font-heading text-primary">Guru</h1>
-      <input
-        type="search"
-        placeholder="Cari guru..."
-        value={search}
-        onChange={e => setSearch(e.target.value)}
-        className="mt-4 w-full p-2 border rounded"
-      />
+    <main className="container mx-auto px-16 py-24">
+      <h1 className="text-2xl lg:text-3xl font-bold uppercase text-primary">Guru</h1>
+      <div className="mt-4">
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+          placeholder="Cari guru..."
+        />
+      </div>
       <div className="mt-6 space-y-8">
         {sortedGroups.map(([jabatan, list]) => (
           <div key={jabatan}>
-            <h2 className="text-xl font-heading text-tersier mb-4">{jabatan}</h2>
-            <div className="grid md:grid-cols-2 gap-4">
+            <h2 className="text-2xl font-bold uppercase text-primary mb-4">{jabatan}</h2>
+            <div className="flex flex-wrap">
               {list.map(t => (
-                <TeacherCard key={t.id} teacher={t} onClick={() => setSelected(t)} />
+                <div key={t.id} className="w-full sm:w-1/2 lg:w-1/3 xl:w-1/4 p-3">
+                  <TeacherCard teacher={t} onClick={() => setSelected(t)} />
+                </div>
               ))}
             </div>
           </div>

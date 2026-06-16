@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import { apiGet } from '@/lib/api';
 import { StudentCard } from '@/components/public/StudentCard';
 import { StudentModal } from '@/components/public/StudentModal';
+import { SearchBar } from '@/components/public/SearchBar';
 import type { StudentPublic } from '@aksana/shared';
 
 const SLUG_TO_KELAS: Record<string, string> = {
@@ -44,25 +45,29 @@ export default function PesdikPage() {
   );
 
   return (
-    <main className="max-w-6xl mx-auto p-6">
-      <h1 className="text-3xl font-heading text-primary">{kelas || slug}</h1>
+    <main className="container mx-auto px-16 py-24">
+      <h1 className="text-2xl lg:text-3xl font-bold uppercase text-primary">
+        {kelas || slug}
+      </h1>
 
-      <input
-        type="search"
-        placeholder="Cari siswa..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="mt-4 w-full p-2 border rounded"
-      />
+      <div className="mt-4">
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+          placeholder="Cari siswa..."
+        />
+      </div>
 
       {loading ? (
-        <p className="mt-6 text-gray-500">Memuat data...</p>
+        <p className="mt-6 text-ink-mute">Memuat data...</p>
       ) : filtered.length === 0 ? (
-        <p className="mt-6 text-gray-500">Tidak ada siswa ditemukan.</p>
+        <p className="mt-6 text-ink-mute">Tidak ada siswa ditemukan.</p>
       ) : (
-        <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <div className="mt-6 flex flex-wrap">
           {filtered.map((s) => (
-            <StudentCard key={s.id} student={s} onClick={setSelected} />
+            <div key={s.id} className="w-full sm:w-1/2 lg:w-1/3 xl:w-1/4 p-3">
+              <StudentCard student={s} onClick={setSelected} />
+            </div>
           ))}
         </div>
       )}
