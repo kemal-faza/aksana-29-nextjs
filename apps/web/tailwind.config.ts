@@ -11,9 +11,7 @@ const config: Config = {
         // Brand (existing)
         primary: '#065f46',           // V3 hijau tua (deep emerald)
         secondary: '#f5f5f5',         // light gray surface
-        tertiary: '#E5BA73',          // V3 gold (canonical -- replaces `tersier`)
-        // DEPRECATED -- remove once all `tersier` references are migrated to `tertiary`
-        tersier: '#E5BA73',
+        tertiary: '#E5BA73',          // V3 gold (canonical)
         dark: '#171717',              // near-black
 
         // Semantic aliases
