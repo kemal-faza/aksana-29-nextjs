@@ -25,11 +25,11 @@ export function SambutanCarousel() {
 
   if (loading) {
     return (
-      <section className="py-16 px-4">
-        <div className="max-w-6xl mx-auto text-center">
+      <section className="py-24 px-16">
+        <div className="container mx-auto text-center">
           <div className="animate-pulse space-y-4">
-            <div className="h-8 w-48 bg-gray-200 rounded mx-auto" />
-            <div className="h-64 bg-gray-100 rounded-lg" />
+            <div className="h-8 w-48 bg-secondary rounded mx-auto" />
+            <div className="h-64 bg-secondary rounded-md" />
           </div>
         </div>
       </section>
@@ -39,11 +39,9 @@ export function SambutanCarousel() {
   if (sambutanList.length === 0) return null;
 
   return (
-    <section className="py-16 px-4 bg-gradient-to-b from-white to-gray-50">
-      <div className="max-w-6xl mx-auto">
-        <h2
-          className="text-3xl font-heading text-primary text-center mb-10"
-        >
+    <section className="py-24 px-16 bg-canvas">
+      <div className="container mx-auto">
+        <h2 className="text-2xl lg:text-3xl font-bold uppercase text-primary text-center mb-10">
           Sambutan
         </h2>
 
@@ -61,10 +59,10 @@ export function SambutanCarousel() {
         >
           {sambutanList.map((item) => (
             <SwiperSlide key={item.id}>
-              <div className="bg-white rounded-xl shadow-lg p-6 md:p-10 max-w-3xl mx-auto">
+              <div className="bg-canvas rounded-md shadow-lg p-6 md:p-10 max-w-3xl mx-auto">
                 <div className="flex flex-col items-center">
                   {/* Photo */}
-                  <div className="relative w-28 h-28 md:w-36 md:h-36 rounded-full overflow-hidden border-4 border-tersier/30 mb-4 bg-gray-100">
+                  <div className="relative w-28 h-28 md:w-36 md:h-36 rounded-full overflow-hidden border-4 border-primary/30 mb-4 bg-secondary">
                     {item.image_path ? (
                       <Image
                         src={getImageUrl(item.image_path, 320)}
@@ -73,18 +71,18 @@ export function SambutanCarousel() {
                         className="object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400 text-4xl font-heading">
+                      <div className="w-full h-full flex items-center justify-center text-ink-placeholder text-4xl">
                         {item.nama.charAt(0)}
                       </div>
                     )}
                   </div>
 
                   {/* Name & Position */}
-                  <h3 className="text-xl font-heading text-primary">{item.nama}</h3>
-                  <p className="text-sm text-tersier font-medium mt-1">{item.jabatan}</p>
+                  <h3 className="text-xl font-semibold text-primary">{item.nama}</h3>
+                  <p className="text-sm text-primary/80 font-medium mt-1">{item.jabatan}</p>
 
                   {/* Speech */}
-                  <div className="mt-6 text-gray-600 text-sm md:text-base leading-relaxed text-justify max-w-2xl">
+                  <div className="mt-6 text-ink-mute text-sm md:text-base leading-relaxed text-justify max-w-2xl">
                     {item.isi.split('\n').map((paragraph, i) => (
                       <p key={i} className="mb-3">
                         {paragraph}
