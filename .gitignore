@@ -70,6 +70,9 @@ temp/
 data/local/
 seed-output/
 
+# Dedup script backups (auto-generated, contains deleted rows)
+packages/db/src/seed/backup-*.json
+
 # Sentry Config File
 .env.sentry-build-plugin
 .env*

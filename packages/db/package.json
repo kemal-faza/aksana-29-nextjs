@@ -10,7 +10,12 @@
     "studio": "drizzle-kit studio",
     "seed:bootstrap": "tsx src/seed/bootstrap-admin.ts",
     "seed:all": "tsx src/seed/from-original.ts",
-    "migrate:images": "tsx src/seed/migrate-images.ts"
+    "migrate:images": "tsx src/seed/migrate-images.ts",
+    "dedupe:students": "tsx src/seed/dedupe-students.ts",
+    "dedupe:teachers": "tsx src/seed/dedupe-teachers.ts",
+    "dedupe:sambutan": "tsx src/seed/dedupe-sambutan.ts",
+    "test": "vitest run",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "drizzle-orm": "^0.36.0",
@@ -22,6 +27,7 @@
   "devDependencies": {
     "@types/node": "^22.10.0",
     "drizzle-kit": "^0.28.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.9"
   }
 }
