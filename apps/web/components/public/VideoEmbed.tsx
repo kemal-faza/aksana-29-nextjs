@@ -11,11 +11,11 @@ export function VideoEmbed({ driveId, judul, deskripsi }: VideoEmbedProps) {
   const [loaded, setLoaded] = useState(false);
 
   return (
-    <div className="bg-secondary rounded-lg overflow-hidden shadow-lg">
-      <div className="aspect-video relative bg-dark">
+    <div className="bg-secondary rounded-md overflow-hidden shadow-lg">
+      <div className="aspect-video relative bg-dark/50">
         {!loaded && (
-          <div className="absolute inset-0 flex items-center justify-center text-white">
-            <p className="text-lg">Memuat video...</p>
+          <div className="absolute inset-0 flex items-center justify-center text-secondary">
+            <p className="text-lg font-semibold">Memuat video...</p>
           </div>
         )}
         <iframe
@@ -28,8 +28,8 @@ export function VideoEmbed({ driveId, judul, deskripsi }: VideoEmbedProps) {
         />
       </div>
       <div className="p-4">
-        <h3 className="font-heading text-xl text-primary">{judul}</h3>
-        {deskripsi && <p className="text-sm text-gray-600 mt-1">{deskripsi}</p>}
+        <h3 className="text-lg font-semibold text-primary">{judul}</h3>
+        {deskripsi && <p className="text-sm text-ink-mute mt-1">{deskripsi}</p>}
       </div>
     </div>
   );
